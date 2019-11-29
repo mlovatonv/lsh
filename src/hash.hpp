@@ -1,37 +1,33 @@
 #ifndef HASH_INCLUDED
 #define HASH_INCLUDED
 
-#include <iostream>
-#include <numeric>
+#include <random>
 #include "point.hpp"
-#include "random.hpp"
 
 template <std::size_t N>
 class Hash {
 	private:
-		using Plane = std::vector<int>;
+		using Plane = std::vector<double>;
 		using HashedStr = unsigned long long;
 
-		int numOfPlanes;
+		int numOfPlanes = -1;
 		std::vector<Plane> planes;
 
 	public:
-		Hash(int dimensions, int numOfPlanes) : 
-			dimensions(dimensions), numOfPlanes(numOfPlanes) {
-				planes.resize(numOfPlanes);
-				Random rd(-2500, 2500);
+		Hash() = default;
 
-				for (Plane plane : planes) {
-					for (int j = 0; j < dimensions; j++) {
-						int x = rd();
-						std::cout<<x<<" ";
-						plane.push_back(x);
-					}
-					std::cout << std::endl;
+		Hash(int numOfPlanes) : numOfPlanes(numOfPlanes) {
+			planes.resize(numOfPlanes);
+			std::random_device rd;
+
+			for (int i = 0; i < numOfPlanes; i++) {
+				for (int j = 0; j < N; j++) {
+					planes[i].emplace_back(rd()%2);
 				}
 			}
+		}
 
-		HashedStr operator()(Point p) {
+		HashedStr operator()(const Point<N> &p) const {
 			HashedStr hashedPoint = 0;
 
 			for (Plane plane : planes) {
@@ -39,17 +35,21 @@ class Hash {
 				if (compare(p, plane)) {
 					hashedPoint++; 
 				}
-				std::cout << hashedPoint << std::endl;
 			}
 
 			return hashedPoint;
 		}
 
-		bool compare (Point &point, Plane &plane) {
-			long long z = 0;
+		bool compare (const Point<N> &point, const Plane &plane) const {
+			double z = 0;
 
 			for (std::size_t i = 0; i < N; i++) {
-				z += plane[i]*point[i];
+				if (plane[i]) {
+					z += point[i];
+				}
+				else {
+					z -= point[i];
+				}
 			}
 
 			return z > 0;

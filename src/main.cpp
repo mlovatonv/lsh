@@ -14,7 +14,7 @@
 #include <time.h>
 #include <thread>
 #include <mutex>
-#include "kdtree.h"
+#include "lsh.hpp"
 #include "mnist.h"
 using namespace std;
 
@@ -26,10 +26,10 @@ static int correctCount;
 static mutex queryLock; // lock for global counters
 
 // Perform kNN classification on data[start, end) using kd-tree, and update global counters
-static void kNNQueryThread(int start, int end, const KDTree<784, unsigned int>& kd, size_t k, const dataset& data) {
+static void kNNQueryThread(int start, int end, const LSH<784, 5, unsigned int>& lsh, size_t k, const dataset& data) {
     for (int i = start; i < end; i++) {
         const auto &p = data[i];
-        unsigned int pred = kd.kNNValue(p.first, k);
+        unsigned int pred = lsh.kNNValue(p.first, k);
         queryLock.lock();
         ++numQueriesProcessed;
         if (pred == p.second) ++correctCount;
@@ -73,15 +73,15 @@ int main(int argc, char **argv) {
     cout << "Finished transforming dataset!" << endl;
 
     // Construct KD-Tree using training set
-    KDTree<784, unsigned int> kd(trainData);
-    cout << "Finished building KD-Tree!" << endl;
+    LSH<784, 5, unsigned int> lsh(13, trainData);
+    cout << "Finished building LSH!" << endl;
 
     // Sanity check on the training set
     cout << "Start Sanity Check: contains() should return true for training data, "
             << "and 1-NN training set accuracy should be perfect" << endl;
     bool sanityPass = true;
     for (int i = 0; i < 1000; i++) {
-        if (!kd.contains(trainData[i].first) || kd.kNNValue(trainData[i].first, 1) != trainData[i].second) {
+        if (!lsh.contains(trainData[i].first) || lsh.kNNValue(trainData[i].first, 1) != trainData[i].second) {
             sanityPass = false;
             break;
         }
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < kNumThreads; i++) {
         int start = i * queriesPerThread;
         int end = (i == kNumThreads-1) ? testCnt : start + queriesPerThread;
-        threads.push_back(thread(kNNQueryThread, start, end, ref(kd), k, ref(testData)));
+        threads.push_back(thread(kNNQueryThread, start, end, ref(lsh), k, ref(testData)));
     }
     for (thread &t : threads) t.join();
 
