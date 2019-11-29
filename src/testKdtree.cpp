@@ -1,5 +1,5 @@
 /**
- * File: main.cc
+ * File: testKdtree.cpp
  * ------------------------
  * Use KD-Tree to perform hand-written digit classification on the MNIST dataset
  * Training set: 60000 images

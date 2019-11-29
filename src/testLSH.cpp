@@ -1,7 +1,7 @@
 /**
- * File: main.cc
+ * File: testLSH.cpp
  * ------------------------
- * Use KD-Tree to perform hand-written digit classification on the MNIST dataset
+ * Use LSH to perform hand-written digit classification on the MNIST dataset
  * Training set: 60000 images
  * Test set: 10000 images
  */
@@ -25,7 +25,7 @@ static int numQueriesProcessed;
 static int correctCount;
 static mutex queryLock; // lock for global counters
 
-// Perform kNN classification on data[start, end) using kd-tree, and update global counters
+// Perform kNN classification on data[start, end) using LSH, and update global counters
 static void kNNQueryThread(int start, int end, const LSH<784, 5, unsigned int>& lsh, size_t k, const dataset& data) {
     for (int i = start; i < end; i++) {
         const auto &p = data[i];
@@ -38,7 +38,7 @@ static void kNNQueryThread(int start, int end, const LSH<784, 5, unsigned int>& 
     }
 }
 
-// Transform loaded data to the format that KDTree constructor accepts
+// Transform loaded data to the format that LSH constructor accepts
 void transformData(mnist_data* rawData, unsigned int cnt, dataset& data) {
     for (int idx = 0; idx < cnt; idx++) {
         std::vector<double> tmp;
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     transformData(rawTestData, testCnt, testData);
     cout << "Finished transforming dataset!" << endl;
 
-    // Construct KD-Tree using training set
+    // Construct LSH using training set
     LSH<784, 5, unsigned int> lsh(13, trainData);
     cout << "Finished building LSH!" << endl;
 
